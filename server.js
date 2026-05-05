@@ -2,8 +2,19 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
+
+// ==========================
+// MIDDLEWARE
+// ==========================
 app.use(cors());
 app.use(express.json());
+
+// ==========================
+// ROOT (WAJIB untuk Railway)
+// ==========================
+app.get("/", (req, res) => {
+  res.send("API Gadai aktif 🚀");
+});
 
 // ==========================
 // UTIL
@@ -18,7 +29,7 @@ function hitungHari(t1, t2){
 }
 
 // ==========================
-// API
+// API HITUNG
 // ==========================
 app.post("/hitung", (req, res) => {
   try {
@@ -28,8 +39,17 @@ app.post("/hitung", (req, res) => {
     const t2 = new Date(tglBayar);
     const pinjam = Number(pinjaman);
 
+    // VALIDASI
     if (!tglPinjam || !tglBayar || isNaN(pinjam)) {
       return res.status(400).json({ error: "Input tidak valid" });
+    }
+
+    if (isNaN(t1.getTime()) || isNaN(t2.getTime())) {
+      return res.status(400).json({ error: "Format tanggal tidak valid" });
+    }
+
+    if (pinjam <= 0) {
+      return res.status(400).json({ error: "Pinjaman harus lebih dari 0" });
     }
 
     if (t1 > t2) {
@@ -48,6 +68,9 @@ app.post("/hitung", (req, res) => {
     let sisa = hariJasa;
     let no = 1;
 
+    // ==========================
+    // HITUNG JASA
+    // ==========================
     while(sisa > 0){
       let periode = sisa >= 30 ? 30 : sisa;
       let persen = periode <= 10 ? 1 : (periode <= 20 ? 2 : 3);
@@ -66,6 +89,9 @@ app.post("/hitung", (req, res) => {
       no++;
     }
 
+    // ==========================
+    // HITUNG DENDA
+    // ==========================
     if(hari > 90){
       let sisaDenda = hari - 90;
       let noDenda = 1;
@@ -93,7 +119,7 @@ app.post("/hitung", (req, res) => {
     let totalJasa = bungaTotal + dendaTotal;
     let totalBayar = bulatkan(pinjam + totalJasa);
 
-    res.json({
+    return res.json({
       hari,
       pinjaman: pinjam,
       totalJasa,
@@ -103,12 +129,27 @@ app.post("/hitung", (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    console.error("ERROR:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
+// ==========================
+// GLOBAL ERROR HANDLER
+// ==========================
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
+});
+
+// ==========================
+// START SERVER
+// ==========================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Server jalan di port", PORT);
+  console.log(`Server jalan di port ${PORT}`);
 });

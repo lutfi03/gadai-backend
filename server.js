@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 // ==========================
-// ROOT (WAJIB untuk Railway)
+// ROOT (HEALTH CHECK)
 // ==========================
 app.get("/", (req, res) => {
   res.send("API Gadai aktif 🚀");
@@ -33,6 +33,8 @@ function hitungHari(t1, t2){
 // ==========================
 app.post("/hitung", (req, res) => {
   try {
+    console.log("REQUEST:", req.body); // debug
+
     const { tglPinjam, tglBayar, pinjaman } = req.body;
 
     const t1 = new Date(tglPinjam);
@@ -146,10 +148,11 @@ process.on("unhandledRejection", (err) => {
 });
 
 // ==========================
-// START SERVER
+// START SERVER (FIX RAILWAY)
 // ==========================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+// 🔥 INI YANG PENTING (binding fix)
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server jalan di port ${PORT}`);
 });
